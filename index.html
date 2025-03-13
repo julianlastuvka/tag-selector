@@ -173,6 +173,27 @@
                 padding: 8px 14px;  /* Slightly increased padding */
             }
         }
+
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .language-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--gray);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        
+        .language-button.active {
+            background-color: var(--secondary);
+        }
     </style>
 </head>
 <body>
@@ -180,6 +201,11 @@
         <header>
             <h1>Content Tag Selector</h1>
             <p>Select tags for your content by clicking on them</p>
+            
+            <div class="language-selector">
+                <button id="lang-en" class="language-button active">English</button>
+                <button id="lang-es" class="language-button">Español</button>
+            </div>
         </header>
         
         <div class="tab-container">
@@ -297,8 +323,85 @@
             ]
         };
 
+        // Add translations object
+        const TRANSLATIONS = {
+            "es": {
+                // Category translations
+                "categories": {
+                    "clothing_and_dress": "Ropa y vestimenta",
+                    "sexual_acts": "Actos sexuales",
+                    "toys_and_objects": "Juguetes y objetos",
+                    "fetishes_and_kinks": "Fetiches y kinks",
+                    "cosplay_and_roles": "Cosplay y roles",
+                    "accessories": "Accesorios",
+                    "content_format": "Formato de contenido",
+                    "location_and_scenario": "Ubicación y escenario",
+                    "positions_and_body_focus": "Posiciones y enfoque corporal",
+                    "media_type": "Tipo de medio",
+                    "nudity_level": "Nivel de desnudez",
+                    "visible_body_parts": "Partes del cuerpo visibles",
+                    "hair_color": "Color de pelo",
+                    "hair_length": "Longitud del pelo",
+                    "age": "Edad",
+                    "aesthetic_styles": "Estilos estéticos",
+                    "unique_features": "Características únicas",
+                    "tattoos_and_piercings": "Tatuajes y piercings",
+                    "skin_tone": "Tono de piel",
+                    "ethnicity": "Etnia",
+                    "nationality": "Nacionalidad",
+                    "height": "Altura",
+                    "body_type": "Tipo de cuerpo",
+                    "bust_size": "Tamaño del busto",
+                    "butt_and_hips": "Trasero y caderas"
+                },
+                // UI translations
+                "ui": {
+                    "Content Tag Selector": "Selector de Etiquetas de Contenido",
+                    "Select tags for your content by clicking on them": "Selecciona etiquetas para tu contenido haciendo clic en ellas",
+                    "Content Tags": "Etiquetas de Contenido",
+                    "Profile Tags": "Etiquetas de Perfil",
+                    "Selected Tags": "Etiquetas Seleccionadas",
+                    "Select tags to see them here": "Selecciona etiquetas para verlas aquí",
+                    "Copy Tags": "Copiar Etiquetas",
+                    "✓ Copied!": "✓ ¡Copiado!"
+                },
+                // Tag translations
+                "tags": {
+                    // Just a sample of translations - you should complete this with all tags
+                    "panties": "bragas",
+                    "thong": "tanga",
+                    "bikini": "bikini",
+                    "masturbation": "masturbación",
+                    "squirting": "squirting",
+                    "blonde_hair": "pelo rubio",
+                    "petite": "menuda",
+                    // Add all other tag translations here
+                }
+            }
+        };
+
+        // Current language
+        let currentLanguage = 'en';
+
         // Track selected tags
         const selectedTags = new Set();
+
+        // Translate text based on current language
+        function translateText(text, type) {
+            if (currentLanguage === 'en') {
+                return text;
+            }
+            
+            if (type === 'category') {
+                return TRANSLATIONS[currentLanguage].categories[text] || text;
+            } else if (type === 'ui') {
+                return TRANSLATIONS[currentLanguage].ui[text] || text;
+            } else if (type === 'tag') {
+                return TRANSLATIONS[currentLanguage].tags[text] || text.replace(/_/g, ' ');
+            }
+            
+            return text;
+        }
 
         // Generate tag sections
         function generateTagSections(container, tagsObj) {
@@ -309,9 +412,9 @@
                 const section = document.createElement('div');
                 section.className = 'category-section';
                 
-                // Create category heading
+                // Create category heading with translation
                 const heading = document.createElement('h3');
-                heading.textContent = category.replace(/_/g, ' ');
+                heading.textContent = translateText(category, 'category');
                 section.appendChild(heading);
                 
                 // Create tags container
@@ -322,8 +425,8 @@
                 tags.forEach(tag => {
                     const button = document.createElement('button');
                     button.className = 'tag-button';
-                    button.textContent = tag.replace(/_/g, ' ');
-                    button.dataset.tag = tag;
+                    button.textContent = translateText(tag, 'tag');
+                    button.dataset.tag = tag; // Keep original tag value
                     
                     if (selectedTags.has(tag)) {
                         button.classList.add('selected');
@@ -353,30 +456,73 @@
             updateResult();
         }
 
-        // Update result text
+        // Update result text - keep original English tag names
         function updateResult() {
             const resultElement = document.getElementById('result');
             if (selectedTags.size === 0) {
-                resultElement.textContent = 'Select tags to see them here';
+                resultElement.textContent = translateText('Select tags to see them here', 'ui');
             } else {
                 resultElement.textContent = Array.from(selectedTags).join(', ');
             }
         }
 
+        // Switch language
+        function switchLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update UI text elements
+            document.querySelector('h1').textContent = translateText('Content Tag Selector', 'ui');
+            document.querySelector('header p').textContent = translateText('Select tags for your content by clicking on them', 'ui');
+            document.querySelectorAll('.tab-button')[0].textContent = translateText('Content Tags', 'ui');
+            document.querySelectorAll('.tab-button')[1].textContent = translateText('Profile Tags', 'ui');
+            document.querySelector('.result-section h3').textContent = translateText('Selected Tags', 'ui');
+            
+            const copyButton = document.getElementById('copyButton');
+            if (!copyButton.classList.contains('copied')) {
+                copyButton.textContent = translateText('Copy Tags', 'ui');
+            } else {
+                copyButton.textContent = translateText('✓ Copied!', 'ui');
+            }
+            
+            // Update result placeholder if empty
+            const resultElement = document.getElementById('result');
+            if (selectedTags.size === 0) {
+                resultElement.textContent = translateText('Select tags to see them here', 'ui');
+            }
+            
+            // Update language buttons
+            document.getElementById('lang-en').classList.toggle('active', lang === 'en');
+            document.getElementById('lang-es').classList.toggle('active', lang === 'es');
+            
+            // Regenerate tag buttons
+            generateTagSections(
+                document.getElementById('categorized-content'),
+                CATEGORIZED_TAGS
+            );
+            generateTagSections(
+                document.getElementById('profile-content'),
+                PROFILE_TAGS
+            );
+        }
+
         // Copy result to clipboard
         document.getElementById('copyButton').addEventListener('click', function() {
             const resultText = document.getElementById('result').textContent;
-            if (resultText !== 'Select tags to see them here') {
+            if (resultText !== translateText('Select tags to see them here', 'ui')) {
                 navigator.clipboard.writeText(resultText).then(() => {
-                    this.textContent = '✓ Copied!';
+                    this.textContent = translateText('✓ Copied!', 'ui');
                     this.classList.add('copied');
                     setTimeout(() => {
-                        this.textContent = 'Copy Tags';
+                        this.textContent = translateText('Copy Tags', 'ui');
                         this.classList.remove('copied');
                     }, 2000);
                 });
             }
         });
+
+        // Language button event listeners
+        document.getElementById('lang-en').addEventListener('click', () => switchLanguage('en'));
+        document.getElementById('lang-es').addEventListener('click', () => switchLanguage('es'));
 
         // Tab switching
         const tabButtons = document.querySelectorAll('.tab-button');
